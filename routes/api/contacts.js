@@ -1,49 +1,93 @@
-import express from 'express'
-import { listContacts } from '../../models/contacts.js'
-import { getContactById } from '../../models/contacts.js'
-import { removeContact } from '../../models/contacts.js'
-import { addContact } from '../../models/contacts.js'
-const contactsRouter = express.Router()
+import express from "express";
+import { listContacts } from "../../models/contacts.js";
+import { getContactById } from "../../models/contacts.js";
+import { removeContact } from "../../models/contacts.js";
+import { addContact } from "../../models/contacts.js";
+import { updateContact } from "../../models/contacts.js";
+import { HttpError } from "../../helpers/index.js";
 
-contactsRouter.get('/', async (req, res, next) => {
-  try{
-    const data = await listContacts()
-    res.json(data)
-  }catch(error) {
-res.status(500).json({message:'server ERROR' })
-  }
+import Joi from "joi";
 
-})
+const contactsRouter = express.Router();
 
-contactsRouter.get('/:contactId', async (req, res, next) => {
-  try{
-    const {id} =req.params
-    const result = await getContactById(id)
-    res.json(result)
-  }catch (error){
-    res.status(500).json({message:'server ERROR' })
-  }
+const contactsAddSchema = Joi.object({
+  id: Joi.string().required,
+  name: Joi.string().required,
+  email: Joi.string().required,
+  phone: Joi.string().required,
+});
 
-})
-
-contactsRouter.post('/', async (req, res, next) => {
-  const body = req.body;
+contactsRouter.get("/", async (req, res, next) => {
   try {
-    const result = await addContact(body);
-    console.log(body)
-    res.json(result);
+    const data = await listContacts();
+    if (!data) {
+      throw HttpError(500, "Movies not found");
+    }
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ message: 'Error adding contact' });
+    next(error);
   }
 });
 
-contactsRouter.delete('/:contactId', async (req, res, next) => {
-  const id = req.params
-  res.json(removeContact(id))
-})
+contactsRouter.get("/:contactId", async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const result = await getContactById(contactId);
+    if (!result) {
+      throw HttpError(500, "Movies not found");
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
 
-contactsRouter.put('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+contactsRouter.post("/", async (req, res, next) => {
+  try {
+    const { error } = contactsAddSchema.validate(req.body);
+    if (error) {
+      throw HttpError(400, error.message);
+    }
+    const body = req.body;
+    const result = await addContact(body);
+    if (!result) {
+      throw HttpError(400, "missing required name field");
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
 
-export default contactsRouter
+contactsRouter.delete("/:contactId", async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const result = await removeContact(contactId);
+    if (!result) {
+      throw HttpError(404, "Not found");
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+contactsRouter.put("/:contactId", async (req, res, next) => {
+  try {
+    const { error } = contactsAddSchema.validate(req.body);
+    if (error) {
+      throw HttpError(400, error.message);
+    }
+    const { contactId } = req.params;
+    const body = req.body;
+    const result = await updateContact(contactId, body);
+    if (!result) {
+      throw HttpError(404, "Not found");
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default contactsRouter;

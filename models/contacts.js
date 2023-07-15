@@ -24,14 +24,23 @@ const sortJS = JSON.stringify(sort)
 return(deletCont)
 }
 
+
+
 export  const addContact = async (body) => {
   const data = await fs.readFile(contactsPath)
   const text = JSON.parse(data)
-  console.log(body)
   text.push(body)
   const massJS = await JSON.stringify(text)
   const result = await fs.writeFile(contactsPath,massJS)
   return(body)
 }
 
-const updateContact = async (contactId, body) => {}
+export const updateContact = async (contactId, body) => {
+  const data = await fs.readFile(contactsPath)
+  const text = JSON.parse(data)
+  const updateContact =  text.filter(el => el.id !== contactId)
+  updateContact.push(body)
+  const massUpdateContact = await JSON.stringify(updateContact)
+  const result =  await fs.writeFile(contactsPath,massUpdateContact)
+  return (body)
+}
