@@ -5,20 +5,14 @@ const contactsPath = path.resolve('models','contacts.json');
 
  export const listContacts = async () => {
   const data = await fs.readFile(contactsPath)
-
    return(JSON.parse(data))
 }
 
 export const getContactById = async (contactId) => {
-  const data = await fs.readFile(contactsPath)
-  const text = JSON.parse(data)
-  const sort = text.find(el => el.id === contactId)
-  if (sort) {
-   return(sort)
-  }else {
-   return(null)
-  }
-}
+    const data = await listContacts()
+    const contact = data.find((el) => el.id === contactId);
+    return contact || null
+};
 
 export const removeContact = async (contactId) => {
   const data = await fs.readFile(contactsPath)
@@ -30,9 +24,10 @@ const sortJS = JSON.stringify(sort)
 return(deletCont)
 }
 
-export const addContact = async (body) => {
+export  const addContact = async (body) => {
   const data = await fs.readFile(contactsPath)
   const text = JSON.parse(data)
+  console.log(body)
   text.push(body)
   const massJS = await JSON.stringify(text)
   const result = await fs.writeFile(contactsPath,massJS)
