@@ -6,7 +6,8 @@ import { addContact } from '../../models/contacts.js'
 const contactsRouter = express.Router()
 
 contactsRouter.get('/', async (req, res, next) => {
-  res.json(listContacts())
+  const data = listContacts()
+  res.send(data)
 })
 
 contactsRouter.get('/:contactId', async (req, res, next) => {
@@ -15,8 +16,8 @@ contactsRouter.get('/:contactId', async (req, res, next) => {
 })
 
 contactsRouter.post('/', async (req, res, next) => {
-  const id = req.params
-  res.json(addContact(id))
+  const body = req.body
+  res.json(addContact(body))
 })
 
 contactsRouter.delete('/:contactId', async (req, res, next) => {

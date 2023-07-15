@@ -5,8 +5,8 @@ const contactsPath = path.resolve('models','contacts.json');
 
  export const listContacts = async () => {
   const data = await fs.readFile(contactsPath)
-  const text = await data.toString()
-   return(text)
+
+   return(JSON.parse(data))
 }
 
 export const getContactById = async (contactId) => {
