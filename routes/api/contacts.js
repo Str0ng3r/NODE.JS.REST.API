@@ -11,10 +11,15 @@ import Joi from "joi";
 const contactsRouter = express.Router();
 
 const contactsAddSchema = Joi.object({
-  id: Joi.string().required,
-  name: Joi.string().required,
-  email: Joi.string().required,
-  phone: Joi.string().required,
+  id: Joi.string().required(),
+  name: Joi.string().required(),
+  email: Joi.string().required(),
+  phone: Joi.string().required(),
+}).custom((value, helpers) => {
+  if (!value) {
+    return helpers.error("any.custom", { message: "Field 'id' must be present" });
+  }
+  return value;
 });
 
 contactsRouter.get("/", async (req, res, next) => {
@@ -75,6 +80,7 @@ contactsRouter.delete("/:contactId", async (req, res, next) => {
 contactsRouter.put("/:contactId", async (req, res, next) => {
   try {
     const { error } = contactsAddSchema.validate(req.body);
+    console.log(error)
     if (error) {
       throw HttpError(400, error.message);
     }
