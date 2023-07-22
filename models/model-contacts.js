@@ -1,4 +1,5 @@
 import { Schema,model } from "mongoose";
+import { handleSaveError } from "../helpers/handleError";
 
 const contactsSchema = new Schema({
         name: {
@@ -17,6 +18,14 @@ const contactsSchema = new Schema({
         },
 },{versionKey:false,timestamps:true})
 
+
+contactsSchema.pre('findOneAndUpdate',function(next){
+  this.options.runValidators = true
+  next()
+})
+
+contactsSchema.post('save',handleSaveError)
+contactsSchema.post('findOneAndUpdate',handleSaveError)
 const Contact = model('contact',contactsSchema)
 
 export default Contact
