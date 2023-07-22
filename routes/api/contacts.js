@@ -1,17 +1,12 @@
 import express from "express";
-import { listContacts } from "../../models/contacts.js";
-import { getContactById } from "../../models/contacts.js";
-import { removeContact } from "../../models/contacts.js";
-import { addContact } from "../../models/contacts.js";
-import { updateContact } from "../../models/contacts.js";
 import { HttpError } from "../../helpers/index.js";
-
+import Contact from "../../models/model-contacts.js";
 import Joi from "joi";
+// import isValidid from "../../helpers/index.js";
 
 const contactsRouter = express.Router();
 
 const contactsAddSchema = Joi.object({
-  id: Joi.string().required(),
   name: Joi.string().required(),
   email: Joi.string().required(),
   phone: Joi.string().required(),
@@ -24,7 +19,7 @@ const contactsAddSchema = Joi.object({
 
 contactsRouter.get("/", async (req, res, next) => {
   try {
-    const data = await listContacts();
+    const data = await Contact.find();
     if (!data) {
       throw HttpError(500, "Movies not found");
     }
@@ -37,9 +32,9 @@ contactsRouter.get("/", async (req, res, next) => {
 contactsRouter.get("/:contactId", async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await getContactById(contactId);
+    const result = await Contact.findById(contactId)
     if (!result) {
-      throw HttpError(500, "Movies not found");
+      throw HttpError(500, "Contacts not found");
     }
     res.json(result);
   } catch (error) {
@@ -54,7 +49,7 @@ contactsRouter.post("/", async (req, res, next) => {
       throw HttpError(400, error.message);
     }
     const body = req.body;
-    const result = await addContact(body);
+    const result = await Contact.create(body);
     if (!result) {
       throw HttpError(400, "missing required name field");
     }
@@ -67,7 +62,7 @@ contactsRouter.post("/", async (req, res, next) => {
 contactsRouter.delete("/:contactId", async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await removeContact(contactId);
+    const result = await Contact.findOneAndRemove(contactId)
     if (!result) {
       throw HttpError(404, "Not found");
     }
@@ -79,14 +74,9 @@ contactsRouter.delete("/:contactId", async (req, res, next) => {
 
 contactsRouter.put("/:contactId", async (req, res, next) => {
   try {
-    const { error } = contactsAddSchema.validate(req.body);
-    console.log(error)
-    if (error) {
-      throw HttpError(400, error.message);
-    }
     const { contactId } = req.params;
     const body = req.body;
-    const result = await updateContact(contactId, body);
+    const result = await Contact.findByIdAndUpdate(contactId, body);
     if (!result) {
       throw HttpError(404, "Not found");
     }
