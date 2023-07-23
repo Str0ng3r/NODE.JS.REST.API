@@ -17,6 +17,12 @@ const contactsAddSchema = Joi.object({
   return value;
 });
 
+
+
+const contactUpdateFavoriteSchema = Joi.object({
+  favorite:Joi.boolean().required()
+})
+
 contactsRouter.get("/", async (req, res, next) => {
   try {
     const data = await Contact.find();
@@ -76,14 +82,32 @@ contactsRouter.put("/:contactId", async (req, res, next) => {
   try {
     const { contactId } = req.params;
     const body = req.body;
-    const result = await Contact.findByIdAndUpdate(contactId, body);
+    const result = await Contact.findByIdAndUpdate(contactId, body,{new:true});
     if (!result) {
       throw HttpError(404, "Not found");
     }
-    res.json(body);
+    res.json(result);
   } catch (error) {
     next(error);
   }
 });
+
+contactsRouter.patch('/:contactId/favorite',async (req,res,next) => {
+  try {
+    const { error } = contactUpdateFavoriteSchema.validate(req.body);
+    if (error) {
+      throw HttpError(400, error.message);
+    }
+    const {contactId} = req.params
+const favorite = req.body
+const result = await Contact.findByIdAndUpdate(contactId,favorite,{new:true})
+if(!result){
+  throw HttpError(404, "Not found");
+}
+res.json(result)
+  }catch (error) {
+    next(error)
+  }
+})
 
 export default contactsRouter;
