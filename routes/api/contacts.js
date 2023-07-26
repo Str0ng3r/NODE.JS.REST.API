@@ -1,113 +1,23 @@
 import express from "express";
 import { HttpError } from "../../helpers/index.js";
 import Contact from "../../models/model-contacts.js";
-import Joi from "joi";
+import { contactsAddSchema,contactUpdateFavoriteSchema } from "./schemes.js";
 // import isValidid from "../../helpers/index.js";
+import { getAll,getById,addNewContact,deleteContact,updateContact,updateFavorite } from "./controllers.js";
 
 const contactsRouter = express.Router();
 
-const contactsAddSchema = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().required(),
-  phone: Joi.string().required(),
-}).custom((value, helpers) => {
-  if (!value) {
-    return helpers.error("any.custom", { message: "Field 'id' must be present" });
-  }
-  return value;
-});
 
+contactsRouter.get("/", getAll);
 
+contactsRouter.get("/:contactId", getById);
 
-const contactUpdateFavoriteSchema = Joi.object({
-  favorite:Joi.boolean().required()
-})
+contactsRouter.post("/", addNewContact);
 
-contactsRouter.get("/", async (req, res, next) => {
-  try {
-    const data = await Contact.find();
-    if (!data) {
-      throw HttpError(500, "Movies not found");
-    }
-    res.json(data);
-  } catch (error) {
-    next(error);
-  }
-});
+contactsRouter.delete("/:contactId", deleteContact);
 
-contactsRouter.get("/:contactId", async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-    const result = await Contact.findById(contactId)
-    if (!result) {
-      throw HttpError(500, "Contacts not found");
-    }
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});
+contactsRouter.put("/:contactId", updateContact);
 
-contactsRouter.post("/", async (req, res, next) => {
-  try {
-    const { error } = contactsAddSchema.validate(req.body);
-    if (error) {
-      throw HttpError(400, error.message);
-    }
-    const body = req.body;
-    const result = await Contact.create(body);
-    if (!result) {
-      throw HttpError(400, "missing required name field");
-    }
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-contactsRouter.delete("/:contactId", async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-    const result = await Contact.findOneAndRemove(contactId)
-    if (!result) {
-      throw HttpError(404, "Not found");
-    }
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-contactsRouter.put("/:contactId", async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-    const body = req.body;
-    const result = await Contact.findByIdAndUpdate(contactId, body,{new:true});
-    if (!result) {
-      throw HttpError(404, "Not found");
-    }
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-contactsRouter.patch('/:contactId/favorite',async (req,res,next) => {
-  try {
-    const { error } = contactUpdateFavoriteSchema.validate(req.body);
-    if (error) {
-      throw HttpError(400, error.message);
-    }
-    const {contactId} = req.params
-const favorite = req.body
-const result = await Contact.findByIdAndUpdate(contactId,favorite,{new:true})
-if(!result){
-  throw HttpError(404, "Not found");
-}
-res.json(result)
-  }catch (error) {
-    next(error)
-  }
-})
+contactsRouter.patch('/:contactId/favorite',updateFavorite)
 
 export default contactsRouter;
