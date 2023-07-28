@@ -1,7 +1,8 @@
 
 import Contact from "../../models/model-contacts.js";
+import Users from "../../models/model-users.js";
 import { HttpError } from "../../helpers/index.js";
-import { contactsAddSchema,contactUpdateFavoriteSchema } from "./schemes.js";
+import { contactsAddSchema,contactUpdateFavoriteSchema,usersSchema } from "./schemes.js";
 
 
 export  const getAll = async  (req, res, next) => {
@@ -90,3 +91,21 @@ export  const getAll = async  (req, res, next) => {
       next(error)
     }
   }
+
+  export const registrUser = async(req,res,next) => {
+    try {
+const {error} = usersSchema.validate(req.body)
+if (error) {
+  throw HttpError(401, error.message);
+}
+if (user) {
+  throw HttpError(404, 'this user have in system');
+}else {
+  Users.create(req.body)
+}
+
+}catch (error) {
+
+    }
+  }
+  
