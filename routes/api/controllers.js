@@ -3,7 +3,7 @@ import Contact from "../../models/model-contacts.js";
 import Users from "../../models/model-users.js";
 import { HttpError } from "../../helpers/index.js";
 import { contactsAddSchema,contactUpdateFavoriteSchema,usersSchema } from "./schemes.js";
-
+import bcrypt from 'bcrypt'
 
 export  const getAll = async  (req, res, next) => {
     try {
@@ -94,18 +94,19 @@ export  const getAll = async  (req, res, next) => {
 
   export const registrUser = async(req,res,next) => {
     try {
-const {error} = usersSchema.validate(req.body)
-if (error) {
-  throw HttpError(401, error.message);
-}
-if (user) {
-  throw HttpError(404, 'this user have in system');
-}else {
-  Users.create(req.body)
-}
-
+      const {email, password} = req.body;
+      const user = await Users.findOne({email});
+      if(user) {
+        throw HttpError(409, "Email in use");
+    }
+    const hashPassword = await bcrypt.hash(password, 10);
+    const newUser = await Users.create({...req.body, password: hashPassword});
+res.status(201).json({
+  name: newUser.name,
+  email: newUser.email,
+})
 }catch (error) {
-
+next(error)
     }
   }
   
