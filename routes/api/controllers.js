@@ -3,7 +3,9 @@ import Contact from "../../models/model-contacts.js";
 import Users from "../../models/model-users.js";
 import { HttpError } from "../../helpers/index.js";
 import { contactsAddSchema,contactUpdateFavoriteSchema,usersSchema } from "./schemes.js";
+import jwt from "jsonwebtoken";
 import bcrypt from 'bcrypt'
+const {JWT_SECRET} = process.env
 
 export  const getAll = async  (req, res, next) => {
     try {
@@ -110,3 +112,26 @@ next(error)
     }
   }
   
+
+  export const loginUser = async(req, res) => {
+    const {email, password} = req.body;
+    const user = await Users.findOne({email});
+    if(!user) {
+        throw HttpError(401, "Email or password invalid");
+    }
+
+    const passwordCompare = await bcrypt.compare(password, user.password);
+    if(!passwordCompare) {
+        throw HttpError(401, "Email or password invalid");
+    }
+
+    const payload = {
+        id: user._id,
+    }
+
+    const token = jwt.sign(payload, JWT_SECRET, {expiresIn: "23h"});
+
+    res.json({
+        token,
+    })
+}
