@@ -1,7 +1,9 @@
 import Contact from "../../models/model-contacts.js";
 import Users from "../../models/model-users.js";
 import dotenv from "dotenv";
+import gravatar from 'gravatar';
 import { HttpError } from "../../helpers/index.js";
+
 import {
   contactsAddSchema,
   contactUpdateFavoriteSchema,
@@ -9,6 +11,7 @@ import {
 } from "./schemes.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { resizeAvatar } from "../../helpers/resizing.js";
 dotenv.config();
 const { JWT_SECRET } = process.env;
 
@@ -115,7 +118,8 @@ export const registrUser = async (req, res, next) => {
       throw HttpError(409, "Email in use");
     }
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = await Users.create({ ...req.body, password: hashPassword });
+    const avatar = await gravatar.url(email)
+    const newUser = await Users.create({ ...req.body, password: hashPassword,avatarURL:avatar });
     res.status(201).json({
       name: newUser.name,
       email: newUser.email,
@@ -124,6 +128,31 @@ export const registrUser = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateAvatar = async (req,res,next) => {
+  try {
+  const file = req.file
+  console.log(file)
+  const { error } = usersSchema.validate(req.body);
+    if (error) {
+      throw HttpError(400, error.message);
+    }
+    const { email, password } = req.body;
+    const user = await Users.findOne({ email });
+    const contactId = user._id
+
+const avatarUpd = {
+  avatarURL:file.path
+}
+await resizeAvatar(file.path)
+    const result = await Users.findByIdAndUpdate(contactId,avatarUpd, {
+      new: true,
+    });
+    res.status(200).json(avatarUpd)
+  }catch (error) {
+next(error)
+  }
+}
 
 export const loginUser = async (req, res) => {
   const { error } = usersSchema.validate(req.body);

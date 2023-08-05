@@ -1,6 +1,6 @@
-import {HttpError} from './helpers/index.js'
+import {HttpError} from '../helpers/index.js'
 import jwt from 'jsonwebtoken'
-import Users from './models/model-users.js'
+import Users from '../models/model-users.js'
 import dotenv from 'dotenv'
 dotenv.config()
 const {JWT_SECRET} = process.env

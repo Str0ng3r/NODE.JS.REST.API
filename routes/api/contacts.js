@@ -1,6 +1,6 @@
 import express from "express";
 import { getAll,getById,addNewContact,deleteContact,updateContact,updateFavorite} from "./controllers.js";
-import autheticate from "../../autheticate.js";
+import autheticate from "../../middlewears/autheticate.js";
 const contactsRouter = express.Router();
 
 
