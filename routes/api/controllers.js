@@ -3,6 +3,7 @@ import Users from "../../models/model-users.js";
 import dotenv from "dotenv";
 import gravatar from 'gravatar';
 import { HttpError } from "../../helpers/index.js";
+import fs from 'fs'
 
 import {
   contactsAddSchema,
@@ -131,6 +132,10 @@ export const registrUser = async (req, res, next) => {
 
 export const updateAvatar = async (req,res,next) => {
   try {
+    const folderName = 'tmp';
+    if (!fs.existsSync(folderName)) {
+      fs.mkdirSync(folderName);
+    }
   const file = req.file
   console.log(file)
   const { error } = usersSchema.validate(req.body);
