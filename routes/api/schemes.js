@@ -17,6 +17,9 @@ export const contactsAddSchema = Joi.object({
     favorite:Joi.boolean().required()
   })
 
+export const emailSchema = Joi.object({
+  email:Joi.string().required()
+})
   export const usersSchema = Joi.object({
     email: Joi.string().required(),
     password: Joi.string().required(),

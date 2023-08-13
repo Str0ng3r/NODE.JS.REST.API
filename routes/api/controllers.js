@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import gravatar from 'gravatar';
 import { HttpError } from "../../helpers/index.js";
 import fs from 'fs'
+import nodemailer from 'nodemailer'
 
 import {
   contactsAddSchema,
@@ -13,8 +14,9 @@ import {
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { resizeAvatar } from "../../helpers/resizing.js";
+import { nanoid } from "nanoid";
 dotenv.config();
-const { JWT_SECRET } = process.env;
+const { JWT_SECRET,META_PASSWORD,PORT } = process.env;
 
 export const getAll = async (req, res, next) => {
   try {
@@ -120,7 +122,26 @@ export const registrUser = async (req, res, next) => {
     }
     const hashPassword = await bcrypt.hash(password, 10);
     const avatar = await gravatar.url(email)
-    const newUser = await Users.create({ ...req.body, password: hashPassword,avatarURL:avatar });
+    const verifyToken =await nanoid()
+    const newUser = await Users.create({ ...req.body, password: hashPassword,avatarURL:avatar,verificationToken:verifyToken });
+const nodemailerConfig = {
+  host:'smtp.meta.ua',
+  port:465,
+  secure:true,
+  auth:{
+    user:'maksimillianokey@meta.ua',
+    pass:META_PASSWORD
+  }
+}
+const transport = nodemailer.createTransport(nodemailerConfig)
+
+const emailTo = {
+  to:email,
+  from:'maksimillianokey@meta.ua',
+  subject:'Verify Email',
+  html:`<a target="_blank" href="http://localhost:${PORT}/api/users/verify/${verifyToken}">Click verify email</a>`
+}
+await transport.sendMail(emailTo)
     res.status(201).json({
       name: newUser.name,
       email: newUser.email,
@@ -168,6 +189,9 @@ export const loginUser = async (req, res) => {
   const user = await Users.findOne({ email });
   if (!user) {
     throw HttpError(401, "Email or password invalid");
+  }
+  if(!user.verify){
+    throw HttpError(404,'You re not verify your email')
   }
 
   const passwordCompare = await bcrypt.compare(password, user.password);
@@ -237,4 +261,62 @@ res.json(200,body)
   }catch (error) {
 next(error)
   }
+}
+
+export const verifyUser = async (req,res,next) => {
+try {
+const {verificationToken} = req.params
+const user = await Users.findOne({ verificationToken });
+if (!user) {
+  throw HttpError(401, "Email not found");
+}
+const id = user._id;
+const result = await Users.findByIdAndUpdate(
+  id,
+  {verificationToken:null},
+  { verify: true }, // Set the token field to null to remove the token
+  { new: true }
+);
+if(result){
+  res.json(200,'Verification successful')
+}
+}catch(error) {
+  next(error)
+}
+}
+
+export const repeatVerifyUser = async (req,res,next) => {
+  try {
+  const {email} = req.body
+  const user = await Users.findOne({email})
+  if (!user) {
+    throw HttpError(401, "Email not found");
+  }
+  if(user.verify){
+    throw HttpError(401,"Email already verify")
+  }
+  const nodemailerConfig = {
+    host:'smtp.meta.ua',
+    port:465,
+    secure:true,
+    auth:{
+      user:'maksimillianokey@meta.ua',
+      pass:META_PASSWORD
+    }
+  }
+  const transport = nodemailer.createTransport(nodemailerConfig)
+  
+  const emailTo = {
+    to:email,
+    from:'maksimillianokey@meta.ua',
+    subject:'Verify Email',
+    html:`<a target="_blank" href="http://localhost:${PORT}/api/users/verify/${user.verificationToken}">Click verify email</a>`
+  }
+  await transport.sendMail(emailTo)
+      res.json({
+        message:'Verify email send success'
+      });
+    }catch (error) {
+      next(error)
+    }
 }
